@@ -292,7 +292,7 @@ aside.src{display:none}
       <div class="readout" id="readout"></div>
     </div>
   </div>
-  <aside class="src"><div class="say">Two cases. If the elevator comes in time, we ride it and we are exactly optimal. If it doesn't, we waited k minus one and walked k — that's 2k minus 1, while the ideal is k. So the ratio is 2 minus 1 over k — always below 2. On the chart, the blue line follows the optimum until minute k minus 1, then stays flat. Let me move the slider to show it. And no deterministic strategy can do better: an adversary can always send the elevator one minute after we leave. The algorithm uses constant memory and at most k checks.</div></aside>
+  <aside class="src"><div class="say">Two cases. If the elevator comes in time, we ride it and we are exactly optimal. If it doesn't, we waited k minus one and walked k — that's 2k minus 1, while the ideal is k. So the ratio is 2 minus 1 over k — always below 2. On the chart, the blue line follows the optimum until minute k minus 1, then stays flat. Let me move the slider to show it. And no deterministic strategy can do better: an adversary can always send the elevator just after we leave. The algorithm uses constant memory and at most k checks.</div></aside>
 </section>
 
 <!-- 8 PSEUDOCODE -->
@@ -314,7 +314,7 @@ aside.src{display:none}
       <p style="font-size:20px;color:var(--muted);line-height:1.45">ELEVATOR-ARRIVED(t) is the algorithm’s only view of the future.</p>
     </div>
   </div>
-  <aside class="src"><div class="say">Here is the pseudocode in the style of our textbook. t counts the minutes. While t is at most k minus one, we check whether the elevator has arrived. If yes, we ride and return t plus one. If not, we wait one more minute. If the loop ends, we take the stairs and return k minus one plus k. Let's trace it. With k equal to 5 and the elevator at minute 3, the algorithm returns 4. If the elevator never comes, it returns 9 — that is 2k minus 1.</div></aside>
+  <aside class="src"><div class="say">Here is the pseudocode in the style of our textbook. t counts the minutes we have waited. While the elevator has not arrived, we check whether t has reached k minus one. If it has, we take the stairs and return k minus one plus k. Otherwise we wait one more minute. As soon as the elevator arrives, we leave the loop, ride it and return t plus one. Let's trace it. With k equal to 5 and the elevator at minute 3, the algorithm returns 4. If the elevator never comes, it returns 9 — that is 2k minus 1.</div></aside>
 </section>
 
 <!-- 9 REAL WORLD -->
@@ -480,19 +480,19 @@ kIn.oninput=()=>drawChart(false);mIn.oninput=()=>drawChart(false);drawChart(fals
 /* pseudocode trace */
 const lines=[
   '<span class="ln">1</span>t = 0',
-  '<span class="ln">2</span><span class="kw">while</span> t ≤ k − 1',
-  '<span class="ln">3</span>    <span class="kw">if</span> ELEVATOR-ARRIVED(t)',
-  '<span class="ln">4</span>        take the elevator',
-  '<span class="ln">5</span>        <span class="kw">return</span> t + 1',
+  '<span class="ln">2</span><span class="kw">while not</span> ELEVATOR-ARRIVED(t)',
+  '<span class="ln">3</span>    <span class="kw">if</span> t == k − 1',
+  '<span class="ln">4</span>        take the stairs',
+  '<span class="ln">5</span>        <span class="kw">return</span> (k − 1) + k',
   '<span class="ln">6</span>    wait one minute',
   '<span class="ln">7</span>    t = t + 1',
-  '<span class="ln">8</span>take the stairs',
-  '<span class="ln">9</span><span class="kw">return</span> (k − 1) + k'];
+  '<span class="ln">8</span>take the elevator',
+  '<span class="ln">9</span><span class="kw">return</span> t + 1'];
 const code=document.getElementById('code');code.innerHTML=lines.map(l=>`<div>${l}</div>`).join('');
 const rows=[...code.children];
 function trace(m){
   clearT();const k=5;const seq=[];let t=0;seq.push([0,0]);
-  while(true){seq.push([1,t]);if(t>k-1){seq.push([7,t]);seq.push([8,t,2*k-1]);break;}seq.push([2,t]);if(t===m){seq.push([3,t]);seq.push([4,t,t+1]);break;}seq.push([5,t]);t++;seq.push([6,t]);}
+  while(true){seq.push([1,t]);if(t===m){seq.push([7,t]);seq.push([8,t,t+1]);break;}seq.push([2,t]);if(t===k-1){seq.push([3,t]);seq.push([4,t,2*k-1]);break;}seq.push([5,t]);t++;seq.push([6,t]);}
   document.getElementById('vK').textContent=k;document.getElementById('vM').textContent=m===null?'∞':m;
   document.getElementById('vR').textContent='–';
   let i=0;timers.push(setInterval(()=>{
