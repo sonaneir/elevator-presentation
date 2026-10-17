@@ -164,7 +164,6 @@ p{margin:0}
 .notes h4{margin:0 0 6px;font-family:var(--display);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--led)}
 .notes .who{font-size:13px;color:var(--muted);margin-bottom:12px}
 .notes .say{color:var(--fg);margin-bottom:18px}
-.notes .mean{color:#C9D2E3;border-top:1px solid var(--line);padding-top:14px}
 aside.src{display:none}
 .hint{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--grey);z-index:20}
 @media (max-width:700px){.hint{display:none}}
@@ -187,7 +186,7 @@ aside.src{display:none}
     <p><b>Team 1</b> — Yevhenii Pron · Nazar Yakovyshen</p>
     <p style="color:var(--muted)">Instructor: Dr. Kolesnikov · American University Kyiv · Fall 2026</p>
   </div>
-  <aside class="src"><div class="say">Good afternoon. We are Team 1 — Yevhenii Pron and Nazar Yakovyshen. Our topic is the waiting for an elevator problem. It sounds like an everyday situation, but it is a classic example of an online algorithm: an algorithm that has to make decisions without knowing the future.</div><div class="mean"><b>Смысл:</b> вступление. Задача взята из CLRS (4-е изд., глава 27 «Online Algorithms»). Ключевое слово — <b>online</b>: решение принимается раньше, чем известны все данные.</div></aside>
+  <aside class="src"><div class="say">Good afternoon. We are Team 1 — Yevhenii Pron and Nazar Yakovyshen. Our topic is the waiting for an elevator problem. It sounds like an everyday situation, but it is a classic example of an online algorithm: an algorithm that has to make decisions without knowing the future.</div></aside>
 </section>
 
 <!-- 2 TEAM -->
@@ -205,7 +204,7 @@ aside.src{display:none}
       <p>Pseudocode, the real-world application and the project risks</p>
     </div>
   </div>
-  <aside class="src"><div class="say">I will present the problem, the classical algorithm and its analysis. Nazar will present the pseudocode, the real-world application and the risks of our project.</div><div class="mean"><b>Смысл:</b> по заданию каждый участник обязан представить свою часть. Карточки появляются по нажатию →.</div></aside>
+  <aside class="src"><div class="say">I will present the problem, the classical algorithm and its analysis. Nazar will present the pseudocode, the real-world application and the risks of our project.</div></aside>
 </section>
 
 <!-- 3 PROBLEM -->
@@ -228,7 +227,7 @@ aside.src{display:none}
     </div>
   </div>
   <p class="lead f">Every minute you decide: <b>keep waiting</b> or <b>give up and walk</b>, without knowing the future.</p>
-  <aside class="src"><div class="say">Imagine you are on the ground floor. You can take the stairs — that always takes k minutes. Or you can wait for the elevator. The ride itself takes one minute, but you don't know when the elevator will arrive; let's call that time m. Every minute you have to decide: keep waiting, or give up and walk. If you knew m, the choice would be easy. The whole problem is that you don't.</div><div class="mean"><b>Смысл:</b> два варианта — фиксированная цена (лестница, k минут) против неизвестного ожидания (лифт, m + 1). Если бы m было известно, задача тривиальна. Вся сложность — в неизвестном m.</div></aside>
+  <aside class="src"><div class="say">Imagine you are on the ground floor. You can take the stairs — that always takes k minutes. Or you can wait for the elevator. The ride itself takes one minute, but you don't know when the elevator will arrive; let's call that time m. Every minute you have to decide: keep waiting, or give up and walk. If you knew m, the choice would be easy. The whole problem is that you don't.</div></aside>
 </section>
 
 <!-- 4 ONLINE -->
@@ -247,7 +246,7 @@ aside.src{display:none}
     </div>
   </div>
   <p class="lead f">The simplest <b>rent-or-buy</b> (ski rental) problem: waiting is renting minute by minute, the stairs are buying once.</p>
-  <aside class="src"><div class="say">An offline algorithm knows the whole input in advance. Here it knows m, so its cost is simply the minimum of m plus one and k. We call it OPT. Our algorithm is online — it doesn't know m. To measure how good it is, we use the competitive ratio: the worst-case ratio between our cost and OPT. A ratio of 2 means we are never more than twice as slow as someone who knows the future. This problem is the simplest case of rent-or-buy, also known as ski rental: waiting is like renting by the minute, the stairs are like buying once.</div><div class="mean"><b>Смысл:</b> OPT — «идеал с подсказкой из будущего». Competitive ratio — во сколько раз мы хуже идеала в самом плохом случае; чем ближе к 1, тем лучше. Связь с «арендой или покупкой» лыж — классическое название этого семейства задач.</div></aside>
+  <aside class="src"><div class="say">An offline algorithm knows the whole input in advance. Here it knows m, so its cost is simply the minimum of m plus one and k. We call it OPT. Our algorithm is online — it doesn't know m. To measure how good it is, we use the competitive ratio: the worst-case ratio between our cost and OPT. A ratio of 2 means we are never more than twice as slow as someone who knows the future. This problem is the simplest case of rent-or-buy, also known as ski rental: waiting is like renting by the minute, the stairs are like buying once.</div></aside>
 </section>
 
 <!-- 5 STRATEGIES -->
@@ -259,7 +258,7 @@ aside.src{display:none}
     <tr class="f"><td>Always wait</td><td class="mono">m + 1</td><td>unbounded</td></tr>
     <tr class="f win"><td><b>Break-even: wait k − 1, then walk</b></td><td class="mono">m+1 or 2k−1</td><td><b class="led">2 − 1/k &lt; 2</b></td></tr>
   </table>
-  <aside class="src"><div class="say">Any deterministic strategy is just a threshold — how long you are willing to wait. Two extremes. Always take the stairs: if the elevator was already standing there, we spent k minutes instead of one — k times worse. Always wait: the elevator might take an hour, so the ratio is unbounded. The classical algorithm is in between — the break-even strategy — and its ratio is less than 2.</div><div class="mean"><b>Смысл:</b> обе крайности плохие: «всегда лестница» хуже идеала в k раз, «всегда ждать» — бесконечно хуже. Правильный ответ — порог посередине. Строки появляются по одной (→).</div></aside>
+  <aside class="src"><div class="say">Any deterministic strategy is just a threshold — how long you are willing to wait. Two extremes. Always take the stairs: if the elevator was already standing there, we spent k minutes instead of one — k times worse. Always wait: the elevator might take an hour, so the ratio is unbounded. The classical algorithm is in between — the break-even strategy — and its ratio is less than 2.</div></aside>
 </section>
 
 <!-- 6 RULE -->
@@ -270,7 +269,7 @@ aside.src{display:none}
     <h1>Wait k − 1 minutes.<br>Then take the stairs.</h1>
     <p class="lead f" style="max-width:1100px">If the elevator arrives at minute k − 1, riding costs exactly k — the same as the stairs. After that, waiting can never pay off.</p>
   </div>
-  <aside class="src"><div class="say">Here is the rule: wait k minus one minutes. If the elevator hasn't come — take the stairs. Why k minus one? If the elevator arrives at minute k minus one, riding it costs exactly k — the same as the stairs. After that point, waiting can never beat walking. That is the break-even point.</div><div class="mean"><b>Смысл:</b> ждём ровно до момента, когда лифт ещё может оказаться не хуже лестницы — точка безубыточности (break-even). Табло справа показывает, как это выглядит при k = 10: отсчёт до 9, затем «STAIRS».</div></aside>
+  <aside class="src"><div class="say">Here is the rule: wait k minus one minutes. If the elevator hasn't come — take the stairs. Why k minus one? If the elevator arrives at minute k minus one, riding it costs exactly k — the same as the stairs. After that point, waiting can never beat walking. That is the break-even point.</div></aside>
 </section>
 
 <!-- 7 ANALYSIS -->
@@ -293,7 +292,7 @@ aside.src{display:none}
       <div class="readout" id="readout"></div>
     </div>
   </div>
-  <aside class="src"><div class="say">Two cases. If the elevator comes in time, we ride it and we are exactly optimal. If it doesn't, we waited k minus one and walked k — that's 2k minus 1, while the ideal is k. So the ratio is 2 minus 1 over k — always below 2. On the chart, the blue line follows the optimum until minute k minus 1, then stays flat. Let me move the slider to show it. And no deterministic strategy can do better: an adversary can always send the elevator one minute after we leave. The algorithm uses constant memory and at most k checks.</div><div class="mean"><b>Смысл:</b> худший случай — лифт приходит сразу после того, как мы ушли. Тогда мы тратим 2k − 1 вместо k. Двигай ползунок m на защите: пока m ≤ k − 1, синяя и зелёная линии совпадают (ratio 1), дальше ratio = 2 − 1/k. Ползунок k меняет весь график.</div></aside>
+  <aside class="src"><div class="say">Two cases. If the elevator comes in time, we ride it and we are exactly optimal. If it doesn't, we waited k minus one and walked k — that's 2k minus 1, while the ideal is k. So the ratio is 2 minus 1 over k — always below 2. On the chart, the blue line follows the optimum until minute k minus 1, then stays flat. Let me move the slider to show it. And no deterministic strategy can do better: an adversary can always send the elevator one minute after we leave. The algorithm uses constant memory and at most k checks.</div></aside>
 </section>
 
 <!-- 8 PSEUDOCODE -->
@@ -315,7 +314,7 @@ aside.src{display:none}
       <p style="font-size:20px;color:var(--muted);line-height:1.45">ELEVATOR-ARRIVED(t) is the algorithm’s only view of the future.</p>
     </div>
   </div>
-  <aside class="src"><div class="say">Here is the pseudocode in the style of our textbook. t counts the minutes. While t is at most k minus one, we check whether the elevator has arrived. If yes, we ride and return t plus one. If not, we wait one more minute. If the loop ends, we take the stairs and return k minus one plus k. Let's trace it. With k equal to 5 and the elevator at minute 3, the algorithm returns 4. If the elevator never comes, it returns 9 — that is 2k minus 1.</div><div class="mean"><b>Смысл:</b> трассировка запускается сама при входе на слайд и по кнопкам. Подсветка показывает, какая строка выполняется. Цикл максимум k итераций → время O(k), память O(1).</div></aside>
+  <aside class="src"><div class="say">Here is the pseudocode in the style of our textbook. t counts the minutes. While t is at most k minus one, we check whether the elevator has arrived. If yes, we ride and return t plus one. If not, we wait one more minute. If the loop ends, we take the stairs and return k minus one plus k. Let's trace it. With k equal to 5 and the elevator at minute 3, the algorithm returns 4. If the elevator never comes, it returns 9 — that is 2k minus 1.</div></aside>
 </section>
 
 <!-- 9 REAL WORLD -->
@@ -327,7 +326,7 @@ aside.src{display:none}
     <div class="lane f"><div class="zz">z<sup>z</sup></div><div class="who">Block <small>= take the stairs</small></div><div class="meter fixed" style="flex:1"><i></i></div><div class="lbl">fixed context-switch cost B</div></div>
     <div class="lane f" style="border-color:var(--led);background:#2A2414"><div class="zz led" style="color:var(--led)">⇢</div><div class="who">Break-even <small>spin ≈ B, then block</small></div><p style="flex:1;font-size:22px;color:var(--fg)">Never wastes more than about 2× the ideal CPU time. Used by OS kernels and the JVM.</p></div>
   </div>
-  <aside class="src"><div class="say">Where is this used? In multithreaded programs. A thread wants a lock that another thread holds. It can spin — keep checking, burning CPU, but continue instantly. Or it can block — ask the operating system to put it to sleep, which costs a fixed amount of time for the context switch. The thread doesn't know when the lock will be released — exactly our problem. The break-even rule says: spin about as long as blocking costs, then block. Operating systems and virtual machines use this spin-then-block idea.</div><div class="mean"><b>Смысл:</b> spin = стоять у лифта, block = идти по лестнице, B = k. Это реальная практика: адаптивные мьютексы в ОС и адаптивный спиннинг в JVM. Экспериментально изучалось Karlin et al. (1991).</div></aside>
+  <aside class="src"><div class="say">Where is this used? In multithreaded programs. A thread wants a lock that another thread holds. It can spin — keep checking, burning CPU, but continue instantly. Or it can block — ask the operating system to put it to sleep, which costs a fixed amount of time for the context switch. The thread doesn't know when the lock will be released — exactly our problem. The break-even rule says: spin about as long as blocking costs, then block. Operating systems and virtual machines use this spin-then-block idea.</div></aside>
 </section>
 
 <!-- 10 PROGRAM -->
@@ -340,7 +339,7 @@ aside.src{display:none}
     <div class="card f"><h3>Simulation</h3><p>Configurable number of threads and critical-section length</p></div>
     <div class="card f"><h3>Comparison</h3><p>Always spin vs. always block vs. break-even: wasted CPU and latency</p></div>
   </div>
-  <aside class="src"><div class="say">Our Java program, SpinOrBlock, will model a web server where worker threads update a shared cache behind one lock. It will include our BreakEvenLock, the algorithm itself as a function that the lock calls, a configurable simulation, and a comparison of three strategies by wasted CPU time and latency. It helps a developer choose a waiting strategy for a real workload.</div><div class="mean"><b>Смысл:</b> по заданию программа обязана вызывать функцию с алгоритмом — здесь это breakEvenWait(). Практическая польза: показать разработчику, какая стратегия ожидания лучше для его нагрузки.</div></aside>
+  <aside class="src"><div class="say">Our Java program, SpinOrBlock, will model a web server where worker threads update a shared cache behind one lock. It will include our BreakEvenLock, the algorithm itself as a function that the lock calls, a configurable simulation, and a comparison of three strategies by wasted CPU time and latency. It helps a developer choose a waiting strategy for a real workload.</div></aside>
 </section>
 
 <!-- 11 RISKS -->
@@ -354,7 +353,7 @@ aside.src{display:none}
     <tr class="f"><td>Concurrency bugs are hard to reproduce</td><td>Keep the lock small, stress-test with many threads</td></tr>
     <tr class="f"><td>Two-person team, tight schedule</td><td>One shared repository, weekly milestones</td></tr>
   </table>
-  <aside class="src"><div class="say">The main risks are technical — measuring time precisely in Java and testing concurrent code — plus the theoretical risk that a worst-case bound says little about typical cases. [Read each row and how we handle it.]</div><div class="mean"><b>Смысл:</b> «риски» — обязательный пункт презентации. Два типа: технические (точные замеры в Java, тесты многопоточности) и теоретические (оценка 2× — худший случай, в среднем бывает лучше).</div></aside>
+  <aside class="src"><div class="say">The main risks are technical — measuring time precisely in Java and testing concurrent code — plus the theoretical risk that a worst-case bound says little about typical cases. [Read each row and how we handle it.]</div></aside>
 </section>
 
 <!-- 12 END -->
@@ -363,7 +362,7 @@ aside.src{display:none}
   <p class="eyebrow">Next: randomized threshold · expected ratio ≈ 1.58</p>
   <h1 style="font-size:120px">Thank you!</h1>
   <p class="lead" style="font-size:34px">Questions?</p>
-  <aside class="src"><div class="say">For the final stage we will implement the algorithm and the program, and describe an improved algorithm: a randomized threshold, which lowers the expected ratio to about 1.58. Thank you — we are ready for your questions.</div><div class="mean"><b>Смысл:</b> улучшение для финала — случайный порог: если ждать случайное время по специальному распределению, ожидаемый коэффициент падает до e/(e−1) ≈ 1.58 (Karlin et al.). Двери лифта открываются при входе на слайд.</div></aside>
+  <aside class="src"><div class="say">For the final stage we will implement the algorithm and the program, and describe an improved algorithm: a randomized threshold, which lowers the expected ratio to about 1.58. Thank you — we are ready for your questions.</div></aside>
 </section>
 
 <div class="foot"><span>Team 1 · Waiting for an Elevator</span><span id="pg">1 / 12</span></div>
@@ -397,7 +396,7 @@ function render(){
   document.getElementById('count').textContent=n;document.getElementById('pg').textContent=n;
   document.getElementById('progress').style.width=((cur+1)/slides.length*100)+'%';
   const src=slides[cur].querySelector('aside.src');
-  document.getElementById('notes').innerHTML=`<h4>Slide ${cur+1} · script</h4><div class="who">Presenter: ${slides[cur].dataset.who}</div><div class="say">${src.querySelector('.say').innerHTML}</div><div class="mean">${src.querySelector('.mean').innerHTML}</div>`;
+  document.getElementById('notes').innerHTML=`<h4>Slide ${cur+1} · script</h4><div class="who">Presenter: ${slides[cur].dataset.who}</div><div class="say">${src.querySelector('.say').innerHTML}</div>`;
   try{history.replaceState(null,'','#s'+(cur+1));}catch(e){}
 }
 function go(i,full){cur=Math.max(0,Math.min(slides.length-1,i));step=full?frags(slides[cur]).length:0;render();enter(cur);}
