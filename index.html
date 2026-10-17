@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Waiting for an Elevator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a fixed 1600x900 stage scaled to the window, like a lift's control panel at night — steel greys, amber LED accents. Single dark look by choice. */
+:root{
+  --bg:#0B111C; --panel:#141C2B; --steel:#232E42; --line:#33405A;
+  --fg:#EEF1F6; --muted:#9AA6BC; --led:#FFB238; --led-dim:#5A4318;
+  --blue:#5B9BFF; --green:#4CC58A; --orange:#F08A3C; --grey:#7D879B;
+  --display:'Chakra Petch','Trebuchet MS',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Courier New',monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);overflow:hidden;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+.viewport{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center center;background:radial-gradient(120% 90% at 85% 0%,#18233A 0%,var(--bg) 60%);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px #0008}
+.slide{position:absolute;inset:0;padding:84px 96px 110px;display:flex;flex-direction:column;gap:36px;opacity:0;visibility:hidden;transform:translateX(40px);transition:opacity .55s ease,transform .55s cubic-bezier(.2,.8,.2,1),visibility 0s .55s}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .55s ease,transform .55s cubic-bezier(.2,.8,.2,1)}
+.slide.before{transform:translateX(-40px)}
+.eyebrow{font-family:var(--display);font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:var(--led);font-weight:600}
+h1,h2{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:64px;line-height:1.05}
+p{margin:0}
+.lead{font-size:30px;line-height:1.45;color:var(--muted);max-width:1150px}
+.lead b{color:var(--fg);font-weight:600}
+.head{display:flex;flex-direction:column;gap:10px}
+.foot{position:absolute;left:96px;right:96px;bottom:44px;display:flex;justify-content:space-between;font-size:18px;color:var(--grey);font-family:var(--mono)}
+/* fragments */
+.f{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s cubic-bezier(.2,.8,.2,1)}
+.f.in{opacity:1;transform:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:34px 38px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card h3{font-family:var(--display);font-size:32px;margin:0;font-weight:600}
+.card p{font-size:24px;line-height:1.45;color:var(--muted)}
+.row{display:flex;gap:28px}
+.row>*{flex:1}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--display);font-size:84px;font-weight:700;line-height:1}
+.led{color:var(--led);text-shadow:0 0 18px #FFB23866}
+
+/* cover */
+.shaft{position:absolute;right:120px;top:70px;width:270px;height:760px;background:linear-gradient(90deg,#101827,#1A2436 50%,#101827);border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.shaft .floor{position:absolute;left:0;right:0;height:2px;background:var(--line)}
+.shaft .floor span{position:absolute;left:12px;top:8px;font-family:var(--mono);font-size:16px;color:var(--grey)}
+.cabin{position:absolute;left:55px;width:160px;height:120px;background:linear-gradient(#2B3750,#1D2638);border:2px solid var(--led);border-radius:6px;box-shadow:0 0 30px #FFB23833}
+.cabin::before,.cabin::after{content:"";position:absolute;top:10px;bottom:10px;width:66px;background:linear-gradient(90deg,#3A4763,#2A3550);border-radius:3px}
+.cabin::before{left:10px}.cabin::after{right:10px}
+.cable{position:absolute;left:134px;top:0;width:2px;background:#56627C}
+.indicator{position:absolute;right:420px;top:70px;width:150px;height:110px;background:#07090F;border:2px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:10px}
+.indicator .num{font-family:var(--display);font-size:64px;color:var(--led);text-shadow:0 0 18px #FFB238aa;font-variant-numeric:tabular-nums}
+.indicator .arr{font-size:30px;color:var(--led)}
+.cover-title{font-size:110px;line-height:.98;max-width:900px}
+.cover-title span{display:inline-block;opacity:0;transform:translateY(40px)}
+.active .cover-title span{animation:rise .7s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* problem */
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.vis{height:230px;position:relative;background:#0D1422;border-radius:12px;border:1px solid var(--line);overflow:hidden}
+.walker{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--orange);box-shadow:0 0 16px var(--orange)}
+.active .walker{animation:climb 5s steps(1) infinite}
+@keyframes climb{0%{left:34px;top:186px}10%{left:84px;top:160px}20%{left:134px;top:134px}30%{left:184px;top:108px}40%{left:234px;top:82px}50%{left:284px;top:56px}60%{left:339px;top:30px}100%{left:339px;top:30px}}
+.wait-clock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.wait-clock .t{font-family:var(--display);font-size:80px;color:var(--led);font-variant-numeric:tabular-nums;text-shadow:0 0 22px #FFB23888}
+.wait-clock .q{font-size:22px;color:var(--muted)}
+.pulse{position:absolute;right:22px;top:22px;width:14px;height:14px;border-radius:50%;background:var(--led)}
+.active .pulse{animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.15}}
+
+/* table */
+.tbl{width:100%;border-collapse:separate;border-spacing:0 10px;font-size:26px}
+.tbl th{font-family:var(--display);text-align:left;font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey);padding:0 24px;font-weight:600}
+.tbl td{background:var(--panel);padding:20px 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tbl td:first-child{border-left:1px solid var(--line);border-radius:12px 0 0 12px}
+.tbl td:last-child{border-right:1px solid var(--line);border-radius:0 12px 12px 0}
+.tbl tr.win td{background:#2A2414;border-color:var(--led);color:var(--fg)}
+.tbl tr.win.in td{box-shadow:0 0 0 0 #FFB23800;animation:glow 2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 28px 0 #FFB23833}}
+.tbl tr.f{transform:translateX(-30px)}
+.tbl tr.f.in{transform:none}
+
+/* rule */
+.rule{background:var(--led);color:#1A1306}
+.rule .eyebrow{color:#1A1306}
+.rule h1{font-size:118px;line-height:1.02;color:#120D04}
+.rule .lead{color:#3D2C0C}
+.countdown{position:absolute;right:96px;top:84px;width:300px;height:150px;background:#120D04;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.countdown .n{font-family:var(--display);font-size:72px;color:var(--led);font-variant-numeric:tabular-nums}
+.countdown .s{font-family:var(--mono);font-size:18px;color:#C9A35E;letter-spacing:.1em}
+
+/* analysis */
+.ana{display:grid;grid-template-columns:560px 1fr;gap:40px;flex:1;min-height:0}
+.case{border-left:5px solid var(--green);padding:14px 22px;background:var(--panel);border-radius:0 12px 12px 0}
+.case.c2{border-left-color:var(--blue)}
+.case h3{font-size:24px;margin:0 0 6px;font-family:var(--display)}
+.case p{font-size:21px;color:var(--muted);line-height:1.4}
+.ratio{font-family:var(--mono);font-size:38px;font-weight:600;color:var(--led)}
+.chartbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.chartbox svg{width:100%;height:auto;display:block}
+.ctrls{display:flex;gap:26px;align-items:center;font-size:20px;color:var(--muted);flex-wrap:wrap}
+.ctrls label{display:flex;gap:10px;align-items:center}
+.ctrls input{accent-color:var(--led);width:170px}
+.ctrls output{font-family:var(--mono);color:var(--fg);min-width:34px}
+.readout{display:flex;gap:22px;font-family:var(--mono);font-size:20px;flex-wrap:wrap}
+.readout span b{color:var(--fg)}
+.readout .dec{color:var(--led)}
+.legend{display:flex;gap:22px;font-size:17px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:30px;height:0;border-top:4px solid;vertical-align:middle;margin-right:8px}
+.draw{transition:stroke-dashoffset 1.4s ease}
+
+/* pseudo */
+.code{background:#070B13;border:1px solid var(--line);border-radius:16px;padding:28px 0;font-family:var(--mono);font-size:27px;line-height:1.62}
+.code div{padding:0 34px;white-space:pre;transition:background .2s,color .2s;color:#C9D2E3}
+.code div.hl{background:#FFB2381F;color:#fff;box-shadow:inset 4px 0 0 var(--led)}
+.code .kw{color:var(--led)}
+.code .ln{color:#4C5870;margin-right:22px}
+.vars{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.var{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+.var small{display:block;font-size:16px;color:var(--grey);letter-spacing:.12em;text-transform:uppercase;font-family:var(--display)}
+.var b{font-family:var(--mono);font-size:36px;color:var(--fg);font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font:600 19px var(--body);color:var(--fg);background:var(--steel);border:1px solid var(--line);border-radius:999px;padding:12px 22px;cursor:pointer}
+.btn:hover{border-color:var(--led)}
+.btn:focus-visible,.nav button:focus-visible{outline:3px solid var(--led);outline-offset:2px}
+
+/* threads */
+.lane{display:flex;align-items:center;gap:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 28px}
+.lane .who{font-family:var(--display);font-size:26px;width:250px}
+.lane .who small{display:block;font-family:var(--body);font-size:18px;color:var(--muted);font-weight:400}
+.spinner{width:56px;height:56px;border-radius:50%;border:6px solid var(--steel);border-top-color:var(--led);flex:none!important}
+.active .spinner{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.zz{font-family:var(--display);font-size:34px;color:var(--blue);width:56px;text-align:center;flex:none!important}
+.active .zz{animation:float 2s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px);opacity:.5}}
+.meter{height:16px;background:#0D1422;border-radius:8px;overflow:hidden;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:8px}
+.active .meter.cpu i{background:var(--led);animation:fill 3s ease-in-out infinite}
+.active .meter.fixed i{background:var(--blue);width:38%}
+@keyframes fill{0%{width:0}80%,100%{width:92%}}
+.lane .lbl{font-size:18px;color:var(--muted);width:230px;text-align:right}
+
+/* doors */
+.doors{position:absolute;inset:0;display:flex;pointer-events:none;z-index:3}
+.door{flex:1;background:linear-gradient(90deg,#2A3550,#3B4866 48%,#2A3550);border:1px solid #4A5878;transition:transform 1.6s cubic-bezier(.7,0,.2,1) .4s}
+.active .door.l{transform:translateX(-100%)}
+.active .door.r{transform:translateX(100%)}
+
+/* chrome */
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center;background:#0B111CE6;border:1px solid var(--line);border-radius:999px;padding:6px 10px;z-index:20}
+.nav button{font:600 15px var(--body);color:var(--fg);background:transparent;border:0;padding:8px 14px;border-radius:999px;cursor:pointer}
+.nav button:hover{background:var(--steel)}
+.nav .count{font-family:var(--mono);font-size:14px;color:var(--muted);min-width:60px;text-align:center}
+.progress{position:fixed;left:0;top:0;height:3px;background:var(--led);transition:width .4s;z-index:21}
+.notes{position:fixed;right:max(16px,env(safe-area-inset-right,0px));top:calc(16px + env(safe-area-inset-top,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));width:min(460px,calc(100% - 32px));background:#0F1726F5;border:1px solid var(--line);border-radius:14px;padding:22px 24px;overflow:auto;z-index:22;font-size:15px;line-height:1.6;box-shadow:0 20px 60px #000a}
+.notes h4{margin:0 0 6px;font-family:var(--display);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--led)}
+.notes .who{font-size:13px;color:var(--muted);margin-bottom:12px}
+.notes .say{color:var(--fg);margin-bottom:18px}
+.notes .mean{color:#C9D2E3;border-top:1px solid var(--line);padding-top:14px}
+aside.src{display:none}
+.hint{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--grey);z-index:20}
+@media (max-width:700px){.hint{display:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.f{opacity:1;transform:none}.cover-title span{opacity:1;transform:none}}
+</style>
+
+<div class="viewport" id="viewport">
+<div class="stage" id="stage">
+
+<!-- 1 COVER -->
+<section class="slide" data-who="Yevhenii">
+  <div class="indicator"><span class="arr" id="arr">▲</span><span class="num" id="floorNum">1</span></div>
+  <div class="shaft" id="shaft"><div class="cable" id="cable"></div><div class="cabin" id="cabin"></div></div>
+  <p class="eyebrow">SDT 202 · Final Team Project · Initial presentation</p>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px">
+    <h1 class="cover-title"><span>Waiting</span> <span style="animation-delay:.12s">for</span> <span style="animation-delay:.24s">an</span> <span style="animation-delay:.36s" class="led">Elevator</span></h1>
+    <p class="lead" style="max-width:820px">An online algorithm: when should you stop waiting and take the stairs?</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;font-size:24px">
+    <p><b>Team 1</b> — Yevhenii Pron · Nazar Yakovyshen</p>
+    <p style="color:var(--muted)">Instructor: Dr. Kolesnikov · American University Kyiv · Fall 2026</p>
+  </div>
+  <aside class="src"><div class="say">Good afternoon. We are Team 1 — Yevhenii Pron and Nazar Yakovyshen. Our topic is the waiting for an elevator problem. It sounds like an everyday situation, but it is a classic example of an online algorithm: an algorithm that has to make decisions without knowing the future.</div><div class="mean"><b>Смысл:</b> вступление. Задача взята из CLRS (4-е изд., глава 27 «Online Algorithms»). Ключевое слово — <b>online</b>: решение принимается раньше, чем известны все данные.</div></aside>
+</section>
+
+<!-- 2 TEAM -->
+<section class="slide" data-who="Yevhenii">
+  <div class="head"><p class="eyebrow">Team 1</p><h2>Who presents what</h2></div>
+  <div class="row" style="flex:1;align-items:center">
+    <div class="card f" style="padding:44px">
+      <div class="big led" style="font-size:64px">YP</div>
+      <h3>Yevhenii Pron</h3>
+      <p>The problem, the classical break-even algorithm and its competitive analysis</p>
+    </div>
+    <div class="card f" style="padding:44px">
+      <div class="big" style="font-size:64px;color:var(--blue)">NY</div>
+      <h3>Nazar Yakovyshen</h3>
+      <p>Pseudocode, the real-world application and the project risks</p>
+    </div>
+  </div>
+  <aside class="src"><div class="say">I will present the problem, the classical algorithm and its analysis. Nazar will present the pseudocode, the real-world application and the risks of our project.</div><div class="mean"><b>Смысл:</b> по заданию каждый участник обязан представить свою часть. Карточки появляются по нажатию →.</div></aside>
+</section>
+
+<!-- 3 PROBLEM -->
+<section class="slide" data-who="Yevhenii">
+  <div class="head"><p class="eyebrow">The problem</p><h2>Stairs or elevator?</h2></div>
+  <div class="paths">
+    <div class="card">
+      <p class="eyebrow" style="color:var(--orange)">Option A · Stairs</p>
+      <div class="vis">
+        <svg viewBox="0 0 400 230" width="400" height="230" style="position:absolute;left:0;top:0" aria-hidden="true"><polyline points="20,210 70,210 70,184 120,184 120,158 170,158 170,132 220,132 220,106 270,106 270,80 320,80 320,54 380,54" fill="none" stroke="#4A5878" stroke-width="3"/></svg>
+        <div class="walker"></div>
+        <p style="position:absolute;right:22px;bottom:18px;font-family:var(--display);font-size:46px;color:var(--fg)">k min</p>
+      </div>
+      <p>Always the same time. Known in advance.</p>
+    </div>
+    <div class="card">
+      <p class="eyebrow">Option B · Elevator</p>
+      <div class="vis"><div class="pulse"></div><div class="wait-clock"><span class="t" id="waitT">00:00</span><span class="q">arrives at m = ?</span></div></div>
+      <p>The ride takes 1 minute, but the arrival time <b style="color:var(--fg)">m</b> is unknown.</p>
+    </div>
+  </div>
+  <p class="lead f">Every minute you decide: <b>keep waiting</b> or <b>give up and walk</b>, without knowing the future.</p>
+  <aside class="src"><div class="say">Imagine you are on the ground floor. You can take the stairs — that always takes k minutes. Or you can wait for the elevator. The ride itself takes one minute, but you don't know when the elevator will arrive; let's call that time m. Every minute you have to decide: keep waiting, or give up and walk. If you knew m, the choice would be easy. The whole problem is that you don't.</div><div class="mean"><b>Смысл:</b> два варианта — фиксированная цена (лестница, k минут) против неизвестного ожидания (лифт, m + 1). Если бы m было известно, задача тривиальна. Вся сложность — в неизвестном m.</div></aside>
+</section>
+
+<!-- 4 ONLINE -->
+<section class="slide" data-who="Yevhenii">
+  <div class="head"><p class="eyebrow">Key idea</p><h2>Online vs. offline</h2></div>
+  <div class="row">
+    <div class="card f" style="border-top:4px solid var(--green)">
+      <h3>Offline — knows m</h3>
+      <p class="mono" style="font-size:36px;color:var(--fg)">OPT(m) = min(m+1, k)</p>
+      <p>The ideal benchmark. Impossible in real life.</p>
+    </div>
+    <div class="card f" style="border-top:4px solid var(--blue)">
+      <h3>Online — doesn’t know m</h3>
+      <p class="mono" style="font-size:36px;color:var(--fg)">ratio = max ALG / OPT</p>
+      <p>Competitive ratio: how much worse than ideal in the worst case.</p>
+    </div>
+  </div>
+  <p class="lead f">The simplest <b>rent-or-buy</b> (ski rental) problem: waiting is renting minute by minute, the stairs are buying once.</p>
+  <aside class="src"><div class="say">An offline algorithm knows the whole input in advance. Here it knows m, so its cost is simply the minimum of m plus one and k. We call it OPT. Our algorithm is online — it doesn't know m. To measure how good it is, we use the competitive ratio: the worst-case ratio between our cost and OPT. A ratio of 2 means we are never more than twice as slow as someone who knows the future. This problem is the simplest case of rent-or-buy, also known as ski rental: waiting is like renting by the minute, the stairs are like buying once.</div><div class="mean"><b>Смысл:</b> OPT — «идеал с подсказкой из будущего». Competitive ratio — во сколько раз мы хуже идеала в самом плохом случае; чем ближе к 1, тем лучше. Связь с «арендой или покупкой» лыж — классическое название этого семейства задач.</div></aside>
+</section>
+
+<!-- 5 STRATEGIES -->
+<section class="slide" data-who="Yevhenii">
+  <div class="head"><p class="eyebrow">Classical algorithm</p><h2>Every strategy is a threshold</h2></div>
+  <table class="tbl">
+    <tr><th style="width:38%">Strategy</th><th style="width:36%">Cost for arrival m</th><th>Competitive ratio</th></tr>
+    <tr class="f"><td>Always take stairs</td><td class="mono">k</td><td>k — bad if the lift is already here</td></tr>
+    <tr class="f"><td>Always wait</td><td class="mono">m + 1</td><td>unbounded</td></tr>
+    <tr class="f win"><td><b>Break-even: wait k − 1, then walk</b></td><td class="mono">m+1 or 2k−1</td><td><b class="led">2 − 1/k &lt; 2</b></td></tr>
+  </table>
+  <aside class="src"><div class="say">Any deterministic strategy is just a threshold — how long you are willing to wait. Two extremes. Always take the stairs: if the elevator was already standing there, we spent k minutes instead of one — k times worse. Always wait: the elevator might take an hour, so the ratio is unbounded. The classical algorithm is in between — the break-even strategy — and its ratio is less than 2.</div><div class="mean"><b>Смысл:</b> обе крайности плохие: «всегда лестница» хуже идеала в k раз, «всегда ждать» — бесконечно хуже. Правильный ответ — порог посередине. Строки появляются по одной (→).</div></aside>
+</section>
+
+<!-- 6 RULE -->
+<section class="slide rule" data-who="Yevhenii">
+  <div class="countdown"><span class="n" id="cdN">0</span><span class="s" id="cdS">WAITING · k = 10</span></div>
+  <p class="eyebrow">The break-even rule</p>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:34px">
+    <h1>Wait k − 1 minutes.<br>Then take the stairs.</h1>
+    <p class="lead f" style="max-width:1100px">If the elevator arrives at minute k − 1, riding costs exactly k — the same as the stairs. After that, waiting can never pay off.</p>
+  </div>
+  <aside class="src"><div class="say">Here is the rule: wait k minus one minutes. If the elevator hasn't come — take the stairs. Why k minus one? If the elevator arrives at minute k minus one, riding it costs exactly k — the same as the stairs. After that point, waiting can never beat walking. That is the break-even point.</div><div class="mean"><b>Смысл:</b> ждём ровно до момента, когда лифт ещё может оказаться не хуже лестницы — точка безубыточности (break-even). Табло справа показывает, как это выглядит при k = 10: отсчёт до 9, затем «STAIRS».</div></aside>
+</section>
+
+<!-- 7 ANALYSIS -->
+<section class="slide" data-who="Yevhenii">
+  <div class="head"><p class="eyebrow">Analysis</p><h2>Never worse than 2× the ideal</h2></div>
+  <div class="ana">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="case f"><h3>Case 1: m ≤ k − 1</h3><p>Ride the elevator: cost m + 1 = OPT. Ratio 1.</p></div>
+      <div class="case c2 f"><h3>Case 2: m ≥ k</h3><p>Wait k − 1, walk k: cost 2k − 1, while OPT = k.</p></div>
+      <p class="ratio f">ratio = 2 − 1/k</p>
+      <p class="f" style="font-size:21px;color:var(--muted);line-height:1.45">No deterministic threshold does better: the adversary sends the elevator right after you leave. Memory O(1), at most k checks.</p>
+    </div>
+    <div class="chartbox">
+      <svg id="chart" viewBox="0 0 760 440" role="img" aria-label="Total time of each strategy depending on the elevator arrival time"></svg>
+      <div class="legend"><span><i style="border-color:var(--blue)"></i>Break-even</span><span><i style="border-color:var(--green);border-top-style:dashed"></i>Optimum OPT</span><span><i style="border-color:var(--orange);border-top-style:dotted"></i>Always stairs</span><span><i style="border-color:var(--grey);border-top-style:dashed"></i>Always wait</span></div>
+      <div class="ctrls">
+        <label for="kIn">k (stairs) <input id="kIn" type="range" min="2" max="15" value="10"><output id="kOut">10</output></label>
+        <label for="mIn">m (elevator) <input id="mIn" type="range" min="0" max="20" value="14"><output id="mOut">14</output></label>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+  </div>
+  <aside class="src"><div class="say">Two cases. If the elevator comes in time, we ride it and we are exactly optimal. If it doesn't, we waited k minus one and walked k — that's 2k minus 1, while the ideal is k. So the ratio is 2 minus 1 over k — always below 2. On the chart, the blue line follows the optimum until minute k minus 1, then stays flat. Let me move the slider to show it. And no deterministic strategy can do better: an adversary can always send the elevator one minute after we leave. The algorithm uses constant memory and at most k checks.</div><div class="mean"><b>Смысл:</b> худший случай — лифт приходит сразу после того, как мы ушли. Тогда мы тратим 2k − 1 вместо k. Двигай ползунок m на защите: пока m ≤ k − 1, синяя и зелёная линии совпадают (ratio 1), дальше ratio = 2 − 1/k. Ползунок k меняет весь график.</div></aside>
+</section>
+
+<!-- 8 PSEUDOCODE -->
+<section class="slide" data-who="Nazar">
+  <div class="head"><p class="eyebrow">Pseudocode</p><h2>BREAK-EVEN-WAIT(k)</h2></div>
+  <div style="display:grid;grid-template-columns:860px 1fr;gap:36px">
+    <div class="code" id="code"></div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="vars">
+        <div class="var"><small>k</small><b id="vK">5</b></div>
+        <div class="var"><small>elevator at m</small><b id="vM">3</b></div>
+        <div class="var"><small>t (minutes)</small><b id="vT">–</b></div>
+        <div class="var"><small>returns</small><b id="vR" class="led">–</b></div>
+      </div>
+      <div class="btns">
+        <button class="btn" id="run1" type="button">Trace: elevator at m = 3</button>
+        <button class="btn" id="run2" type="button">Trace: elevator never comes</button>
+      </div>
+      <p style="font-size:20px;color:var(--muted);line-height:1.45">ELEVATOR-ARRIVED(t) is the algorithm’s only view of the future.</p>
+    </div>
+  </div>
+  <aside class="src"><div class="say">Here is the pseudocode in the style of our textbook. t counts the minutes. While t is at most k minus one, we check whether the elevator has arrived. If yes, we ride and return t plus one. If not, we wait one more minute. If the loop ends, we take the stairs and return k minus one plus k. Let's trace it. With k equal to 5 and the elevator at minute 3, the algorithm returns 4. If the elevator never comes, it returns 9 — that is 2k minus 1.</div><div class="mean"><b>Смысл:</b> трассировка запускается сама при входе на слайд и по кнопкам. Подсветка показывает, какая строка выполняется. Цикл максимум k итераций → время O(k), память O(1).</div></aside>
+</section>
+
+<!-- 9 REAL WORLD -->
+<section class="slide" data-who="Nazar">
+  <div class="head"><p class="eyebrow">Real-world application</p><h2>A thread waiting for a lock</h2></div>
+  <p class="lead">The thread does not know when the lock will be released: <b>the same online problem</b>.</p>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="lane f"><div class="spinner"></div><div class="who">Spin <small>= wait for the elevator</small></div><div class="meter cpu" style="flex:1"><i></i></div><div class="lbl">CPU burns while waiting</div></div>
+    <div class="lane f"><div class="zz">z<sup>z</sup></div><div class="who">Block <small>= take the stairs</small></div><div class="meter fixed" style="flex:1"><i></i></div><div class="lbl">fixed context-switch cost B</div></div>
+    <div class="lane f" style="border-color:var(--led);background:#2A2414"><div class="zz led" style="color:var(--led)">⇢</div><div class="who">Break-even <small>spin ≈ B, then block</small></div><p style="flex:1;font-size:22px;color:var(--fg)">Never wastes more than about 2× the ideal CPU time. Used by OS kernels and the JVM.</p></div>
+  </div>
+  <aside class="src"><div class="say">Where is this used? In multithreaded programs. A thread wants a lock that another thread holds. It can spin — keep checking, burning CPU, but continue instantly. Or it can block — ask the operating system to put it to sleep, which costs a fixed amount of time for the context switch. The thread doesn't know when the lock will be released — exactly our problem. The break-even rule says: spin about as long as blocking costs, then block. Operating systems and virtual machines use this spin-then-block idea.</div><div class="mean"><b>Смысл:</b> spin = стоять у лифта, block = идти по лестнице, B = k. Это реальная практика: адаптивные мьютексы в ОС и адаптивный спиннинг в JVM. Экспериментально изучалось Karlin et al. (1991).</div></aside>
+</section>
+
+<!-- 10 PROGRAM -->
+<section class="slide" data-who="Nazar">
+  <div class="head"><p class="eyebrow">Planned Java program</p><h2>SpinOrBlock</h2></div>
+  <p class="lead">A model web server: worker threads update a shared cache behind one lock.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+    <div class="card f"><h3 class="mono" style="font-size:28px">BreakEvenLock</h3><p>Spins up to a threshold, then parks the thread with LockSupport</p></div>
+    <div class="card f"><h3 class="mono" style="font-size:28px">breakEvenWait()</h3><p>Our algorithm as a function — the lock calls it</p></div>
+    <div class="card f"><h3>Simulation</h3><p>Configurable number of threads and critical-section length</p></div>
+    <div class="card f"><h3>Comparison</h3><p>Always spin vs. always block vs. break-even: wasted CPU and latency</p></div>
+  </div>
+  <aside class="src"><div class="say">Our Java program, SpinOrBlock, will model a web server where worker threads update a shared cache behind one lock. It will include our BreakEvenLock, the algorithm itself as a function that the lock calls, a configurable simulation, and a comparison of three strategies by wasted CPU time and latency. It helps a developer choose a waiting strategy for a real workload.</div><div class="mean"><b>Смысл:</b> по заданию программа обязана вызывать функцию с алгоритмом — здесь это breakEvenWait(). Практическая польза: показать разработчику, какая стратегия ожидания лучше для его нагрузки.</div></aside>
+</section>
+
+<!-- 11 RISKS -->
+<section class="slide" data-who="Nazar">
+  <div class="head"><p class="eyebrow">Risks</p><h2>What could go wrong</h2></div>
+  <table class="tbl" style="font-size:23px">
+    <tr><th style="width:46%">Risk</th><th>How we handle it</th></tr>
+    <tr class="f"><td>The 2× bound is worst-case; real workloads differ</td><td>Measure average results too</td></tr>
+    <tr class="f"><td>Blocking cost B depends on the machine</td><td>Measure B when the program starts</td></tr>
+    <tr class="f"><td>Timing noise in Java (JIT, garbage collector)</td><td>Warm-up, repeated trials, take the minimum</td></tr>
+    <tr class="f"><td>Concurrency bugs are hard to reproduce</td><td>Keep the lock small, stress-test with many threads</td></tr>
+    <tr class="f"><td>Two-person team, tight schedule</td><td>One shared repository, weekly milestones</td></tr>
+  </table>
+  <aside class="src"><div class="say">The main risks are technical — measuring time precisely in Java and testing concurrent code — plus the theoretical risk that a worst-case bound says little about typical cases. [Read each row and how we handle it.]</div><div class="mean"><b>Смысл:</b> «риски» — обязательный пункт презентации. Два типа: технические (точные замеры в Java, тесты многопоточности) и теоретические (оценка 2× — худший случай, в среднем бывает лучше).</div></aside>
+</section>
+
+<!-- 12 END -->
+<section class="slide" data-who="Yevhenii or Nazar" style="justify-content:center;align-items:center;text-align:center">
+  <div class="doors"><div class="door l"></div><div class="door r"></div></div>
+  <p class="eyebrow">Next: randomized threshold · expected ratio ≈ 1.58</p>
+  <h1 style="font-size:120px">Thank you!</h1>
+  <p class="lead" style="font-size:34px">Questions?</p>
+  <aside class="src"><div class="say">For the final stage we will implement the algorithm and the program, and describe an improved algorithm: a randomized threshold, which lowers the expected ratio to about 1.58. Thank you — we are ready for your questions.</div><div class="mean"><b>Смысл:</b> улучшение для финала — случайный порог: если ждать случайное время по специальному распределению, ожидаемый коэффициент падает до e/(e−1) ≈ 1.58 (Karlin et al.). Двери лифта открываются при входе на слайд.</div></aside>
+</section>
+
+<div class="foot"><span>Team 1 · Waiting for an Elevator</span><span id="pg">1 / 12</span></div>
+</div>
+</div>
+
+<div class="progress" id="progress"></div>
+<nav class="nav" aria-label="Slides">
+  <button type="button" id="prevB" aria-label="Previous">←</button>
+  <span class="count" id="count">1 / 12</span>
+  <button type="button" id="nextB" aria-label="Next">→</button>
+  <button type="button" id="notesB">Script (N)</button>
+  <button type="button" id="fsB">Full screen</button>
+</nav>
+<p class="hint">← → or Space · N script · F full screen</p>
+<div class="notes" id="notes" hidden></div>
+
+<script>
+const stage=document.getElementById('stage');
+const slides=[...document.querySelectorAll('.slide')];
+let cur=0,step=0;
+const frags=s=>[...s.querySelectorAll('.f')];
+
+function fit(){const vp=document.getElementById('viewport');const s=Math.min(vp.clientWidth/1600,vp.clientHeight/900)*.97;stage.style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',fit);fit();
+
+function render(){
+  slides.forEach((s,i)=>{s.classList.toggle('active',i===cur);s.classList.toggle('before',i<cur);});
+  frags(slides[cur]).forEach((f,i)=>f.classList.toggle('in',i<step));
+  const n=`${cur+1} / ${slides.length}`;
+  document.getElementById('count').textContent=n;document.getElementById('pg').textContent=n;
+  document.getElementById('progress').style.width=((cur+1)/slides.length*100)+'%';
+  const src=slides[cur].querySelector('aside.src');
+  document.getElementById('notes').innerHTML=`<h4>Slide ${cur+1} · script</h4><div class="who">Presenter: ${slides[cur].dataset.who}</div><div class="say">${src.querySelector('.say').innerHTML}</div><div class="mean">${src.querySelector('.mean').innerHTML}</div>`;
+  try{history.replaceState(null,'','#s'+(cur+1));}catch(e){}
+}
+function go(i,full){cur=Math.max(0,Math.min(slides.length-1,i));step=full?frags(slides[cur]).length:0;render();enter(cur);}
+function next(){const n=frags(slides[cur]).length;if(step<n){step++;render();}else if(cur<slides.length-1)go(cur+1);}
+function prev(){if(step>0){step--;render();}else if(cur>0)go(cur-1,true);}
+
+document.getElementById('nextB').onclick=next;document.getElementById('prevB').onclick=prev;
+const notes=document.getElementById('notes');
+const toggleNotes=()=>{notes.hidden=!notes.hidden;};
+document.getElementById('notesB').onclick=toggleNotes;
+const fs=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});}catch(e){}};
+document.getElementById('fsB').onclick=fs;
+addEventListener('keydown',e=>{
+  if(e.target.matches('input'))return;
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='n'||e.key==='N')toggleNotes();
+  else if(e.key==='f'||e.key==='F')fs();
+});
+stage.addEventListener('click',e=>{if(e.target.closest('input,button,label,.chartbox'))return;next();});
+
+/* per-slide motion */
+let timers=[];
+const clearT=()=>{timers.forEach(t=>{clearInterval(t);clearTimeout(t);});timers=[];};
+function enter(i){
+  clearT();
+  if(i===2){let s=0;const el=document.getElementById('waitT');el.textContent='00:00';timers.push(setInterval(()=>{s++;el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},120));}
+  if(i===5){const n=document.getElementById('cdN'),st=document.getElementById('cdS');let t=0;const tick=()=>{if(t<10){n.textContent=t;st.textContent='WAITING · k = 10';}else{n.textContent='→';st.textContent='TAKE THE STAIRS';}t=t>13?0:t+1;};n.textContent='0';timers.push(setInterval(tick,650));}
+  if(i===6)drawChart(true);
+  if(i===7)trace(3);
+}
+
+/* cover lift */
+(function(){
+  const shaft=document.getElementById('shaft'),cabin=document.getElementById('cabin'),cable=document.getElementById('cable');
+  const floors=6,H=760,ch=120,gap=(H-ch)/(floors-1);
+  for(let f=1;f<=floors;f++){const d=document.createElement('div');d.className='floor';d.style.top=(H-ch-(f-1)*gap+ch)+'px';d.innerHTML=`<span>${f}</span>`;if(f<floors)shaft.appendChild(d);}
+  const plan=[1,5,2,6,3,1];let idx=0,pos=1,target=plan[1],hold=0;
+  const yOf=f=>H-ch-(f-1)*gap;
+  const num=document.getElementById('floorNum'),arr=document.getElementById('arr');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function frame(){
+    if(!reduce){
+      if(hold>0)hold--;
+      else{const d=target-pos;const v=0.025*Math.sign(d);if(Math.abs(d)<0.03){pos=target;hold=70;idx=(idx+1)%plan.length;target=plan[(idx+1)%plan.length];}else pos+=v;}
+      arr.textContent=hold>0?'■':(target>pos?'▲':'▼');
+    }
+    const y=yOf(pos);cabin.style.top=y+'px';cable.style.height=y+'px';num.textContent=Math.round(pos);
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* analysis chart */
+const kIn=document.getElementById('kIn'),mIn=document.getElementById('mIn');
+function drawChart(animate){
+  const k=+kIn.value,M=2*k,svg=document.getElementById('chart');
+  mIn.max=M;if(+mIn.value>M)mIn.value=M;const m=+mIn.value;
+  document.getElementById('kOut').textContent=k;document.getElementById('mOut').textContent=m;
+  const X=v=>60+v*(680/M),Ymax=2*k+1,Y=v=>400-v*(360/Ymax);
+  const be=x=>x<=k-1?x+1:2*k-1,opt=x=>Math.min(x+1,k);
+  const pts=f=>{let a=[];for(let x=0;x<=M;x++)a.push(X(x)+','+Y(f(x)));return a.join(' ');};
+  let g='';
+  [0,k,2*k].forEach(v=>{g+=`<line x1="60" x2="740" y1="${Y(v)}" y2="${Y(v)}" stroke="#2A3448" stroke-width="1"/><text x="48" y="${Y(v)+6}" fill="#9AA6BC" font-size="16" text-anchor="end" font-family="IBM Plex Mono, monospace">${v}</text>`;});
+  [0,k-1,M].forEach(v=>{g+=`<text x="${X(v)}" y="426" fill="#9AA6BC" font-size="16" text-anchor="middle" font-family="IBM Plex Mono, monospace">${v}</text>`;});
+  g+=`<line x1="60" y1="400" x2="740" y2="400" stroke="#56627C" stroke-width="2"/><line x1="60" y1="400" x2="60" y2="20" stroke="#56627C" stroke-width="2"/>`;
+  g+=`<text x="740" y="388" fill="#7D879B" font-size="15" text-anchor="end" font-family="IBM Plex Sans, sans-serif">arrival time m</text><text x="70" y="30" fill="#7D879B" font-size="15" font-family="IBM Plex Sans, sans-serif">total minutes</text>`;
+  g+=`<polyline class="draw" points="${pts(x=>x+1)}" fill="none" stroke="#7D879B" stroke-width="3" stroke-dasharray="10 8"/>`;
+  g+=`<line x1="60" y1="${Y(k)}" x2="740" y2="${Y(k)}" stroke="#F08A3C" stroke-width="4" stroke-dasharray="3 9" stroke-linecap="round"/>`;
+  g+=`<polyline class="draw ln" points="${pts(be)}" fill="none" stroke="#5B9BFF" stroke-width="6" stroke-linejoin="round"/>`;
+  g+=`<polyline points="${pts(opt)}" fill="none" stroke="#4CC58A" stroke-width="3" stroke-dasharray="14 7"/>`;
+  g+=`<line x1="${X(m)}" x2="${X(m)}" y1="400" y2="${Y(be(m))}" stroke="#FFB238" stroke-width="2" stroke-dasharray="4 4"/>`;
+  g+=`<circle cx="${X(m)}" cy="${Y(be(m))}" r="9" fill="#5B9BFF" stroke="#0B111C" stroke-width="3"/><circle cx="${X(m)}" cy="${Y(opt(m))}" r="7" fill="#4CC58A" stroke="#0B111C" stroke-width="3"/>`;
+  svg.innerHTML=g;
+  if(animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){svg.querySelectorAll('.draw').forEach(p=>{const L=p.getTotalLength();if(p.classList.contains('ln')){p.style.strokeDasharray=L;p.style.strokeDashoffset=L;requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.strokeDashoffset=0;}));}});}
+  const a=be(m),o=opt(m);
+  document.getElementById('readout').innerHTML=`<span>ALG = <b>${a}</b></span><span>OPT = <b>${o}</b></span><span>ratio = <b>${(a/o).toFixed(2)}</b></span><span class="dec">${m<=k-1?'→ rides the elevator':'→ took the stairs at minute '+(k-1)}</span>`;
+}
+kIn.oninput=()=>drawChart(false);mIn.oninput=()=>drawChart(false);drawChart(false);
+
+/* pseudocode trace */
+const lines=[
+  '<span class="ln">1</span>t = 0',
+  '<span class="ln">2</span><span class="kw">while</span> t ≤ k − 1',
+  '<span class="ln">3</span>    <span class="kw">if</span> ELEVATOR-ARRIVED(t)',
+  '<span class="ln">4</span>        take the elevator',
+  '<span class="ln">5</span>        <span class="kw">return</span> t + 1',
+  '<span class="ln">6</span>    wait one minute',
+  '<span class="ln">7</span>    t = t + 1',
+  '<span class="ln">8</span>take the stairs',
+  '<span class="ln">9</span><span class="kw">return</span> (k − 1) + k'];
+const code=document.getElementById('code');code.innerHTML=lines.map(l=>`<div>${l}</div>`).join('');
+const rows=[...code.children];
+function trace(m){
+  clearT();const k=5;const seq=[];let t=0;seq.push([0,0]);
+  while(true){seq.push([1,t]);if(t>k-1){seq.push([7,t]);seq.push([8,t,2*k-1]);break;}seq.push([2,t]);if(t===m){seq.push([3,t]);seq.push([4,t,t+1]);break;}seq.push([5,t]);t++;seq.push([6,t]);}
+  document.getElementById('vK').textContent=k;document.getElementById('vM').textContent=m===null?'∞':m;
+  document.getElementById('vR').textContent='–';
+  let i=0;timers.push(setInterval(()=>{
+    if(i>=seq.length){clearT();return;}
+    const [ln,tv,ret]=seq[i++];rows.forEach((r,j)=>r.classList.toggle('hl',j===ln));
+    document.getElementById('vT').textContent=tv;if(ret!==undefined)document.getElementById('vR').textContent=ret;
+  },480));
+}
+document.getElementById('run1').onclick=()=>trace(3);
+document.getElementById('run2').onclick=()=>trace(null);
+
+const h=parseInt((location.hash||'').replace('#s',''),10);
+go(h>=1&&h<=slides.length?h-1:0);
+</script>
+
+</body>
+</html>
